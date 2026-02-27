@@ -1,26 +1,13 @@
-# Camera Capture
+# camera-capture
 
-Three different PowerShell approaches to capturing photos from a Windows webcam. Each script solves the same problem a completely different way.
+I needed my AI assistant to see. Not metaphorically -- literally take a photo through the webcam so it could look at something I was pointing at. Sounds simple until you try doing it from PowerShell on Windows.
 
-## The Scripts
+So I built it three times.
 
-### `capture.ps1` - The Right Way (WinRT)
-Uses the Windows Runtime `MediaCapture` API directly from PowerShell. Loads WinRT assemblies, initializes the camera, captures a JPEG to an in-memory stream, and writes the bytes to a file. Custom `Await` and `AwaitAction` helper functions bridge WinRT's async APIs to synchronous PowerShell execution.
+**capture.ps1** goes straight for the throat: loads WinRT assemblies, initializes `MediaCapture`, writes a JPEG to an in-memory `InMemoryRandomAccessStream`. WinRT's async model doesn't play nice with synchronous PowerShell, so there's a pair of `Await`/`AwaitAction` helpers that bridge that gap manually. This is the "correct" approach, and it's about as pleasant as you'd expect correct-on-Windows to be.
 
-This is the technically correct approach. It's also the most code.
+**snap.ps1** takes a completely different philosophy. It launches the Camera app via `microsoft.windows.camera:`, yanks the window to the foreground with `user32.dll SetForegroundWindow`, then literally sends an Enter keystroke through `SendKeys` to press the shutter button. Then it grabs the newest file from Camera Roll.
 
-### `snap.ps1` - The Creative Way (UI Automation)
-Launches the Windows Camera app via `microsoft.windows.camera:` URI scheme, brings its window to the foreground using `SetForegroundWindow` from user32.dll, and sends an `{ENTER}` keystroke via `SendKeys` to trigger the shutter. Then grabs the latest photo from Camera Roll.
+**take_photo.ps1** is snap.ps1 grown up -- better error handling, a 2-minute recency check to make sure you're actually getting a fresh photo and not last Tuesday's accidental selfie.
 
-This is the "work smarter not harder" approach.
-
-### `take_photo.ps1` - The Reliable Way (Enhanced UI Automation)
-Same strategy as `snap.ps1` but with better error handling, longer waits, and a 2-minute recency window for detecting new photos.
-
-## Why This Exists
-
-These scripts were built to give Pepper (my AI assistant) the ability to see. All three save output to the bot's outputs directory, so Claude can capture and analyze photos as part of task execution.
-
-## Tech
-
-PowerShell, WinRT (Windows.Media.Capture), Win32 API (user32.dll), System.Windows.Forms
+Three scripts, three philosophies: the right way, the creative way, the reliable way.
